@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estoque de Ziperes — Charth</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --surface3: #252525;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0ede8;
+    --text2: #9e9b96;
+    --text3: #5a5753;
+    --accent: #c8a96e;
+    --accent2: #e2c98e;
+    --accent-dim: rgba(200,169,110,0.12);
+    --blue: #5b9bd5;
+    --teal: #4dbfa0;
+    --coral: #d4715a;
+    --warn: #e8a23a;
+    --green: #78b87a;
+    --red: #d46060;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'Outfit', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 56px 64px 40px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 420px; height: 420px;
+    background: radial-gradient(circle, rgba(200,169,110,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .header-title {
+    font-family: var(--serif);
+    font-size: 46px;
+    font-weight: 400;
+    line-height: 1.05;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .header-title em {
+    font-style: italic;
+    color: var(--accent2);
+  }
+  .header-sub {
+    font-size: 14px;
+    color: var(--text2);
+    max-width: 520px;
+  }
+  .header-meta {
+    position: absolute;
+    top: 56px; right: 64px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.8;
+  }
+  .header-meta strong { color: var(--text2); font-weight: 500; }
+
+  /* ── LAYOUT ── */
+  .main { padding: 48px 64px 80px; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin: 48px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi:hover { border-color: var(--border2); }
+  .kpi.accent {
+    border-color: rgba(200,169,110,0.25);
+    background: linear-gradient(135deg, #1a1812 0%, var(--surface) 60%);
+  }
+  .kpi-label {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-bottom: 10px;
+  }
+  .kpi-value {
+    font-family: var(--serif);
+    font-size: 32px;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .kpi.accent .kpi-value { color: var(--accent2); }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .kpi-badge {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-family: var(--mono);
+  }
+  .badge-warn { background: rgba(232,162,58,0.15); color: var(--warn); }
+  .badge-danger { background: rgba(212,96,96,0.15); color: var(--red); }
+  .badge-ok { background: rgba(77,191,160,0.15); color: var(--teal); }
+
+  /* ── TWO COL ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ── CHART CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 26px;
+  }
+  .card-title {
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .card-subtitle {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 18px;
+  }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── BAR ROWS ── */
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .bar-label {
+    width: 90px;
+    flex-shrink: 0;
+    color: var(--text2);
+    text-align: right;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bar-track {
+    flex: 1;
+    background: var(--surface3);
+    border-radius: 3px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+  .bar-val {
+    width: 52px;
+    flex-shrink: 0;
+    color: var(--text);
+    font-weight: 500;
+    font-size: 11px;
+    text-align: right;
+    font-family: var(--mono);
+  }
+  .bar-extra {
+    width: 50px;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+    text-align: right;
+  }
+
+  /* ── TABLE ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .data-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 10px 12px;
+    text-align: left;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table th.right, .data-table td.right { text-align: right; }
+  .data-table td {
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--surface2); }
+
+  .rank-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    width: 20px;
+  }
+  .cod-mono {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+  }
+  .item-name {
+    font-size: 11px;
+    color: var(--text2);
+    max-width: 280px;
+  }
+  .stock-num {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  /* ── TYPE PILLS ── */
+  .pill {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: var(--mono);
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .pill-outros { background: rgba(158,155,150,0.15); color: var(--text2); }
+  .pill-metal-f { background: rgba(91,155,213,0.15); color: var(--blue); }
+  .pill-metal-d { background: rgba(91,155,213,0.10); color: #7ab5e0; }
+  .pill-invis { background: rgba(77,191,160,0.15); color: var(--teal); }
+  .pill-nylon { background: rgba(120,184,122,0.15); color: var(--green); }
+  .pill-metal { background: rgba(158,155,150,0.10); color: var(--text3); }
+
+  /* ── DIVERGÊNCIAS ── */
+  .div-section {
+    background: rgba(232,162,58,0.05);
+    border: 1px solid rgba(232,162,58,0.2);
+    border-radius: 12px;
+    padding: 24px 26px;
+  }
+  .div-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .div-title {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--warn);
+  }
+  .div-desc {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 20px;
+    max-width: 640px;
+    line-height: 1.7;
+  }
+  .div-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .div-row:last-child { border-bottom: none; }
+  .div-cod {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    width: 160px;
+    flex-shrink: 0;
+  }
+  .div-nome { flex: 1; color: var(--text2); }
+  .div-causa { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .div-nums {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+  .div-nums span { color: var(--text); }
+  .ratio-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .ratio-2 { background: rgba(232,162,58,0.15); color: var(--warn); }
+  .ratio-3 { background: rgba(212,96,96,0.15); color: var(--red); }
+  .ratio-4 { background: rgba(212,96,96,0.25); color: #e08080; }
+
+  /* ── ALERTAS ── */
+  .alert-grid { display: flex; flex-direction: column; gap: 10px; }
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .alert-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    font-family: var(--mono);
+    font-weight: 500;
+  }
+  .icon-crit { background: rgba(212,96,96,0.15); color: var(--red); }
+  .icon-warn { background: rgba(232,162,58,0.15); color: var(--warn); }
+  .icon-info { background: rgba(91,155,213,0.15); color: var(--blue); }
+  .alert-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .crit .alert-label { color: var(--red); }
+  .warn .alert-label { color: var(--warn); }
+  .info .alert-label { color: var(--blue); }
+  .alert-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+  }
+  .footer-brand { color: var(--accent); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .kpi, .card, .div-section, .alert {
+    animation: fadeUp 0.5s ease both;
+  }
+  .kpi:nth-child(1) { animation-delay: 0.05s; }
+  .kpi:nth-child(2) { animation-delay: 0.10s; }
+  .kpi:nth-child(3) { animation-delay: 0.15s; }
+  .kpi:nth-child(4) { animation-delay: 0.20s; }
+
+  /* Chart sizing */
+  .chart-wrap { position: relative; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <p class="header-eyebrow">Charth — Relatório Operacional &nbsp;·&nbsp; Almoxarifado</p>
+  <h1 class="header-title">Estoque de <em>Ziperes</em></h1>
+  <p class="header-sub">Análise comparativa entre os dois relatórios exportados do Vexta, diagnóstico de divergências e posição física consolidada.</p>
+  <div class="header-meta">
+    <div>Referência <strong>Posição Física — Vexta</strong></div>
+    <div>Empresa <strong>03</strong></div>
+    <div>Depósito <strong>Almoxarifado</strong></div>
+    <div>Data <strong>20 Abr 2026</strong></div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- KPIs -->
+  <div class="section-label">Visão geral consolidada</div>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Total de SKUs</div>
+      <div class="kpi-value">1.199</div>
+      <div class="kpi-sub">Ziperes cadastrados ativos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Unidades em estoque</div>
+      <div class="kpi-value">49.621</div>
+      <div class="kpi-sub">1.196 Almoxarifado · 3 terceiros</div>
+    </div>
+    <div class="kpi accent">
+      <div class="kpi-label">Custo contábil total</div>
+      <div class="kpi-value">R$ 3,70M</div>
+      <div class="kpi-sub">Valor unitário médio R$ 30,92</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-badge badge-danger">Requer ação</div>
+      <div class="kpi-label">SKUs com divergência</div>
+      <div class="kpi-value">9</div>
+      <div class="kpi-sub">Saldo inflado 2× a 4× no relatório</div>
+    </div>
+  </div>
+
+  <!-- TIPO + CUSTO -->
+  <div class="section-label">Distribuição por tipo de ziper</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Estoque por tipo — unidades</div>
+      <div class="card-subtitle">Classificação extraída do nome do material</div>
+      <div class="legend" id="legend-tipo"></div>
+      <div class="chart-wrap" style="height:220px"><canvas id="tipoChart" role="img" aria-label="Estoque por tipo de ziper em unidades"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Custo contábil por tipo — R$</div>
+      <div class="card-subtitle">Metal Fixo concentra 95,9% do custo total</div>
+      <div class="legend" id="legend-custo"></div>
+      <div class="chart-wrap" style="height:220px"><canvas id="custoChart" role="img" aria-label="Custo contábil por tipo de ziper"></canvas></div>
+    </div>
+  </div>
+
+  <!-- COMPRIMENTO + CORES -->
+  <div class="section-label">Análise dimensional e por referência de cor</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Estoque por comprimento (cm) — top 8</div>
+      <div class="card-subtitle">18cm e 15cm respondem por 43% do volume total</div>
+      <div id="compRows" style="margin-top:4px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top 10 referências de cor — unidades</div>
+      <div class="card-subtitle">YKK Z580 (preto) domina com 15.345 unidades</div>
+      <div id="coresRows" style="margin-top:4px"></div>
+    </div>
+  </div>
+
+  <!-- MOVIMENTO -->
+  <div class="section-label">Último movimento registrado por tipo</div>
+  <div class="card">
+    <div class="card-title">Unidades agrupadas pelo tipo de última movimentação</div>
+    <div class="card-subtitle">Entrada por contagem representa 53,6% do saldo — indica que a base do estoque é oriunda de inventários, não de compras recentes</div>
+    <div class="chart-wrap" style="height:200px; margin-top: 8px"><canvas id="movChart" role="img" aria-label="Estoque por tipo de movimento"></canvas></div>
+  </div>
+
+  <!-- CONCENTRAÇÃO + TOP -->
+  <div class="section-label">Concentração e ranking de itens</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">SKUs por faixa de estoque</div>
+      <div class="card-subtitle">51% dos SKUs têm entre 1–9 unidades — alta pulverização</div>
+      <div class="chart-wrap" style="height:200px; margin-top: 8px"><canvas id="faixaChart" role="img" aria-label="Quantidade de SKUs por faixa de estoque"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top 8 SKUs por volume</div>
+      <div id="topRows" style="margin-top:4px"></div>
+    </div>
+  </div>
+
+  <!-- TOP TABLE -->
+  <div class="section-label">Detalhamento dos top SKUs</div>
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Tipo</th>
+          <th class="right">Estoque</th>
+          <th class="right">V. Unitário</th>
+        </tr>
+      </thead>
+      <tbody id="topBody"></tbody>
+    </table>
+  </div>
+
+  <!-- DIVERGÊNCIAS -->
+  <div class="section-label">Diagnóstico de divergências</div>
+  <div class="div-section">
+    <div class="div-header">
+      <div class="div-title">9 SKUs com QTD_ESTOQUE inflado</div>
+    </div>
+    <p class="div-desc">
+      O relatório <code style="font-family:var(--mono);font-size:10px;color:var(--accent)">estoque_ziperes_charth.xlsx</code> apresenta dois padrões de duplicidade confirmados.
+      <strong style="color:var(--text)">Tipo 1 (saída manual, ratio 2×):</strong> a query soma <code style="font-family:var(--mono);font-size:10px">QUANTIDADE_ANTERIOR + ESTOQUE_ATUAL</code> — ambos iguais no momento da saída.
+      <strong style="color:var(--text)">Tipo 2 (itens com grade, ratio = n grades):</strong> JOIN sem agrupamento correto com a tabela de grades multiplica o saldo pelo número de grades com saldo positivo.
+      Fonte autoritativa: <code style="font-family:var(--mono);font-size:10px;color:var(--teal)">Posicao-Fisica-do-Estoque_4d7b.xls</code>.
+    </p>
+    <div id="divRows"></div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div class="section-label">Alertas operacionais</div>
+  <div class="alert-grid">
+    <div class="alert crit">
+      <div class="alert-icon icon-crit">!</div>
+      <div>
+        <div class="alert-label">Crítico</div>
+        <div class="alert-text">20 SKUs com <code style="font-family:var(--mono);font-size:10px">ESTADO=0</code> (inativos) mantêm saldo positivo em estoque. Risco de baixa contábil não realizada. Inclui Z143 Life (104 un.), Z176 Off White (148 un.) e Z177 Z580 Preto (122 un.).</div>
+      </div>
+    </div>
+    <div class="alert warn">
+      <div class="alert-icon icon-warn">▲</div>
+      <div>
+        <div class="alert-label">Atenção</div>
+        <div class="alert-text">9 SKUs com saldo duplicado no relatório <code style="font-family:var(--mono);font-size:10px">estoque_ziperes_charth.xlsx</code>. Causa identificada na query de geração: soma de <code style="font-family:var(--mono);font-size:10px">QUANTIDADE_ANTERIOR + ESTOQUE_ATUAL</code> ou JOIN não agrupado com tabela de grades. Requer correção na view do Vexta.</div>
+      </div>
+    </div>
+    <div class="alert warn">
+      <div class="alert-icon icon-warn">▲</div>
+      <div>
+        <div class="alert-label">Atenção</div>
+        <div class="alert-text">3 SKUs registrados em "Em Poder de Terceiros" sem confirmação de retorno no período analisado. Necessário acompanhamento com o setor responsável.</div>
+      </div>
+    </div>
+    <div class="alert info">
+      <div class="alert-icon icon-info">i</div>
+      <div>
+        <div class="alert-label">Observação</div>
+        <div class="alert-text">51% dos SKUs (611 de 1.199) têm saldo entre 1–9 unidades. Alta pulverização de cadastro — possível consolidação de referências descontinuadas ou resíduos de lote.</div>
+      </div>
+    </div>
+    <div class="alert info">
+      <div class="alert-icon icon-info">i</div>
+      <div>
+        <div class="alert-label">Observação</div>
+        <div class="alert-text">Metal Fixo concentra 95,9% do custo total (R$ 3,54M de R$ 3,70M) com apenas 21,6% dos SKUs. Atenção especial a esse grupo em revisões de custo contábil e auditorias de grade.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  <div>Posição Física do Estoque — ERP Vexta · Empresa 03 · Almoxarifado</div>
+  <div class="footer-brand">CHARTH</div>
+  <div>Gerado em 20 Abr 2026</div>
+</footer>
+
+<script>
+const TIPO_DATA = [
+  {tipo:'Outros',       estoque:11785, custo:27532,    color:'#888780'},
+  {tipo:'Metal Fixo',   estoque:10781, custo:3544882,  color:'#5b9bd5'},
+  {tipo:'Invisível',    estoque:10423, custo:25853,    color:'#4dbfa0'},
+  {tipo:'Metal Dest.',  estoque:7681,  custo:90888,    color:'#7ab5e0'},
+  {tipo:'Nylon/Poliéster', estoque:6268, custo:2100,  color:'#78b87a'},
+  {tipo:'Metal',        estoque:2683,  custo:6793,     color:'#5a5753'},
+];
+
+// Legends
+function buildLegend(containerId, data) {
+  const el = document.getElementById(containerId);
+  data.forEach(d => {
+    el.innerHTML += `<span class="leg-item"><span class="leg-dot" style="background:${d.color}"></span>${d.tipo}</span>`;
+  });
+}
+buildLegend('legend-tipo', TIPO_DATA);
+buildLegend('legend-custo', TIPO_DATA);
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+};
+
+// Tipo — barras
+new Chart(document.getElementById('tipoChart'), {
+  type: 'bar',
+  data: {
+    labels: TIPO_DATA.map(d => d.tipo),
+    datasets: [{
+      data: TIPO_DATA.map(d => d.estoque),
+      backgroundColor: TIPO_DATA.map(d => d.color),
+      borderRadius: 4,
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    ...chartDefaults,
+    scales: {
+      x: { ticks: { color: '#5a5753', font: { family: "'DM Mono'", size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { ticks: { color: '#5a5753', font: { family: "'DM Mono'", size: 10 }, callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    },
+    plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('pt-BR') + ' un.' } } }
+  }
+});
+
+// Custo — doughnut
+new Chart(document.getElementById('custoChart'), {
+  type: 'doughnut',
+  data: {
+    labels: TIPO_DATA.map(d => d.tipo),
+    datasets: [{
+      data: TIPO_DATA.map(d => d.custo),
+      backgroundColor: TIPO_DATA.map(d => d.color),
+      borderWidth: 3,
+      borderColor: '#161616',
+    }]
+  },
+  options: {
+    ...chartDefaults,
+    cutout: '65%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ' R$ ' + Math.round(ctx.raw).toLocaleString('pt-BR') } }
+    }
+  }
+});
+
+// Movimento — horizontal bar
+const MOV_DATA = [
+  {nome:'Entrada por contagem', val:26611, color:'#5b9bd5'},
+  {nome:'Consumo de insumos',   val:9554,  color:'#4dbfa0'},
+  {nome:'Saída manual',         val:5304,  color:'#d4715a'},
+  {nome:'Compra matéria-prima', val:5217,  color:'#78b87a'},
+  {nome:'Devolução de compra',  val:1227,  color:'#c8a96e'},
+  {nome:'Ajuste zeramento',     val:772,   color:'#888780'},
+  {nome:'Merc. industrializada',val:634,   color:'#7ab5e0'},
+  {nome:'Remessa industrial.',  val:157,   color:'#5a5753'},
+  {nome:'Entrada industrial.',  val:145,   color:'#444441'},
+];
+
+new Chart(document.getElementById('movChart'), {
+  type: 'bar',
+  indexAxis: 'y',
+  data: {
+    labels: MOV_DATA.map(d => d.nome),
+    datasets: [{
+      data: MOV_DATA.map(d => d.val),
+      backgroundColor: MOV_DATA.map(d => d.color),
+      borderRadius: 3,
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    ...chartDefaults,
+    scales: {
+      x: { ticks: { color: '#5a5753', font: { family: "'DM Mono'", size: 10 }, callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { ticks: { color: '#9e9b96', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0)' } }
+    },
+    plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('pt-BR') + ' un.' } } }
+  }
+});
+
+// Faixa de estoque
+new Chart(document.getElementById('faixaChart'), {
+  type: 'bar',
+  data: {
+    labels: ['1–9','10–49','50–99','100–199','200–499','500+'],
+    datasets: [{
+      data: [611, 352, 103, 82, 36, 15],
+      backgroundColor: ['#4dbfa0','#4dbfa0','#5b9bd5','#5b9bd5','#c8a96e','#d46060'],
+      borderRadius: 4,
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    ...chartDefaults,
+    scales: {
+      x: { ticks: { color: '#5a5753', font: { family: "'DM Mono'", size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { ticks: { color: '#5a5753', font: { family: "'DM Mono'", size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    },
+    plugins: { ...chartDefaults.plugins, tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + ' SKUs' } } }
+  }
+});
+
+// Comp bars
+const COMP = [
+  {cm:18, estoque:11520, count:148},
+  {cm:15, estoque:9781,  count:172},
+  {cm:20, estoque:5237,  count:82},
+  {cm:40, estoque:4033,  count:66},
+  {cm:30, estoque:3618,  count:59},
+  {cm:25, estoque:2065,  count:54},
+  {cm:12, estoque:1695,  count:73},
+  {cm:45, estoque:916,   count:31},
+];
+const maxComp = 11520;
+const compContainer = document.getElementById('compRows');
+COMP.forEach(d => {
+  const pct = (d.estoque / maxComp * 100).toFixed(1);
+  compContainer.innerHTML += `<div class="bar-row">
+    <span class="bar-label">${d.cm} cm</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#5b9bd5"></div></div>
+    <span class="bar-val">${d.estoque.toLocaleString('pt-BR')}</span>
+    <span class="bar-extra">${d.count} SKUs</span>
+  </div>`;
+});
+
+// Cores bars
+const CORES = [
+  {cor:'YKK Z580',   val:15345},
+  {cor:'YKK Z801 P', val:3238},
+  {cor:'YKK Z030',   val:2979},
+  {cor:'YKK Z501 B', val:2294},
+  {cor:'YKK Z070',   val:1967},
+  {cor:'YKK Z031',   val:1666},
+  {cor:'YKK Z560',   val:1200},
+  {cor:'NUTELLA',    val:1031},
+  {cor:'574',        val:996},
+  {cor:'GARDEN',     val:888},
+];
+const maxCor = 15345;
+const coresContainer = document.getElementById('coresRows');
+CORES.forEach(d => {
+  const pct = (d.val / maxCor * 100).toFixed(1);
+  coresContainer.innerHTML += `<div class="bar-row" style="margin-bottom:6px">
+    <span class="bar-label" style="width:80px;font-family:var(--mono);font-size:10px">${d.cor}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#c8a96e"></div></div>
+    <span class="bar-val">${d.val.toLocaleString('pt-BR')}</span>
+  </div>`;
+});
+
+// Top 8 mini bars
+const TOP8 = [
+  {cod:'02.02.01.023-Z580', nome:'Plástico 18cm Nº5 cursor gota — Z580 Preto', tipo:'Outros', val:1242},
+  {cod:'02.02.01.091-Z580', nome:'Plástico 20cm Nº5 cursor reto — Z580 Preto', tipo:'Outros', val:1225},
+  {cod:'02.02.01.033-Z560', nome:'Plástico 15cm Nº5 cursor gota — Z560 Grafitte', tipo:'Outros', val:1035},
+  {cod:'02.02.01.033-Z580', nome:'Plástico 15cm Nº5 cursor gota — Z580 Preto', tipo:'Outros', val:944},
+  {cod:'02.02.01.059-Z580', nome:'Metal 18cm Nº5 fixo prata velho quad. — Z580', tipo:'Metal Fixo', val:800},
+  {cod:'02.02.01.00023-560', nome:'Plástico 18cm Nº5 cursor gota — Z560 Carbono', tipo:'Outros', val:741},
+  {cod:'02.02.01.022-Z501', nome:'Metal 18cm Nº5 fixo dourado cursor gota — Z501', tipo:'Metal Fixo', val:638},
+  {cod:'02.02.01.00020-Z070', nome:'Nylon 18cm comum — Z070 Lotus', tipo:'Nylon/Poliéster', val:633},
+];
+const maxTop = 1242;
+const topRows = document.getElementById('topRows');
+TOP8.forEach((d,i) => {
+  const pct = (d.val / maxTop * 100).toFixed(1);
+  topRows.innerHTML += `<div class="bar-row" style="margin-bottom:7px">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:16px;flex-shrink:0;text-align:right">${i+1}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#4dbfa0"></div></div>
+    <span class="bar-val">${d.val.toLocaleString('pt-BR')}</span>
+  </div>`;
+});
+
+// Top full table
+const TIPO_PILL = {
+  'Metal Fixo':     '<span class="pill pill-metal-f">Metal Fixo</span>',
+  'Metal Destacável':'<span class="pill pill-metal-d">Metal Dest.</span>',
+  'Invisível':      '<span class="pill pill-invis">Invisível</span>',
+  'Nylon/Poliéster':'<span class="pill pill-nylon">Nylon</span>',
+  'Metal':          '<span class="pill pill-metal">Metal</span>',
+  'Outros':         '<span class="pill pill-outros">Outros</span>',
+};
+const TOP_FULL = [
+  {cod:'02.02.01.023-YKK Z580', nome:'VSC 56 DA8MSL1 — Plástico 18cm Nº5 Fixo cursor gota — Z580 Preto', tipo:'Outros', val:1242, vu:0},
+  {cod:'02.02.01.091-YKK Z580', nome:'VSC 56 DA8 — Plástico 20cm Nº5 Fixo cursor reto — Z580 Preto', tipo:'Outros', val:1225, vu:0},
+  {cod:'02.02.01.033-YKK Z560', nome:'VSC 56 DA8MSL1 — Plástico 15cm Nº5 Fixo cursor gota — Z560 Grafitte', tipo:'Outros', val:1035, vu:8.65},
+  {cod:'02.02.01.033-YKK Z580', nome:'VSC 56 DA8MSL1 — Plástico 15cm Nº5 Fixo cursor gota — Z580 Preto', tipo:'Outros', val:944, vu:0},
+  {cod:'02.02.01.059-YKK Z580', nome:'RGTHC 56 DA8H2BR — Metal 18cm Nº5 Fixo prata velho quad. — Z580 Preto', tipo:'Metal Fixo', val:800, vu:0},
+  {cod:'02.02.01.00023-560',    nome:'VSC 56 DA8MSL1 — Plástico 18cm Nº5 Fixo cursor gota — Z560 Carbono', tipo:'Outros', val:741, vu:8.25},
+  {cod:'02.02.01.022-YKK Z501', nome:'RGPC 56 DA8MSL1 GEB — Metal 18cm Nº5 Fixo dourado cursor gota — Z501 Branco', tipo:'Metal Fixo', val:638, vu:0},
+  {cod:'02.02.01.00020-YKK Z070',nome:'CFC 36 DA — Nylon 18cm Comum — Z070 Lotus', tipo:'Nylon/Poliéster', val:633, vu:0.01},
+];
+const topBody = document.getElementById('topBody');
+TOP_FULL.forEach((d,i) => {
+  topBody.innerHTML += `<tr>
+    <td class="rank-num">${i+1}</td>
+    <td class="cod-mono">${d.cod}</td>
+    <td class="item-name">${d.nome}</td>
+    <td>${TIPO_PILL[d.tipo] || ''}</td>
+    <td class="right stock-num">${d.val.toLocaleString('pt-BR')}</td>
+    <td class="right" style="font-family:var(--mono);font-size:11px;color:${d.vu > 0 ? 'var(--text)' : 'var(--text3)'}">
+      ${d.vu > 0 ? 'R$ ' + d.vu.toFixed(2) : '—'}
+    </td>
+  </tr>`;
+});
+
+// Divergências
+const DIV_DATA = [
+  {cod:'02.02.01.00016-Z350',   nome:'Invisível 40cm — Z350 Selene',                    df2:39,    df1:78,    ratio:2, causa:'saída manual'},
+  {cod:'02.02.01.00238-Z855',   nome:'Metal 21cm Nº5 fixo dourado — Z855 Chocolate',    df2:8,     df1:16,    ratio:2, causa:'saída manual'},
+  {cod:'02.02.01.00375-YKK574', nome:'Metal 15cm Nº10 fixo ouro velho — YKK574',        df2:7,     df1:14,    ratio:2, causa:'saída manual'},
+  {cod:'02.02.01.00590-Z580',   nome:'Metal fixo N°8 GR10 dourado cursor clips — Z580', df2:468,   df1:936,   ratio:2, causa:'2 grades ativas'},
+  {cod:'02.02.01.00657-Z580',   nome:'Metal fixo Nº8 GR40 dourado cursor clips — Z580', df2:227.7, df1:910.8, ratio:4, causa:'4 grades ativas'},
+  {cod:'02.02.01.00660-YKK574', nome:'Metal destac. N°8 GR40 níquel clips — YKK574',    df2:31,    df1:93,    ratio:3, causa:'3 grades ativas'},
+  {cod:'02.02.01.00667-Z801',   nome:'Metal destac. N°8 GR40 dourado clips — Z801',     df2:260,   df1:780,   ratio:3, causa:'3 grades ativas'},
+  {cod:'02.02.01.012-Z511',     nome:'Invisível 30cm — Z511 Rosa Bebê',                 df2:75,    df1:150,   ratio:2, causa:'saída manual'},
+  {cod:'02.02.01.016-Z031',     nome:'Invisível 40cm — Z031 Areia',                     df2:521,   df1:1042,  ratio:2, causa:'saída manual'},
+];
+const RATIO_CLASS = {2:'ratio-2', 3:'ratio-3', 4:'ratio-4'};
+const divContainer = document.getElementById('divRows');
+DIV_DATA.forEach(d => {
+  divContainer.innerHTML += `<div class="div-row">
+    <span class="div-cod">${d.cod}</span>
+    <span class="div-nome">${d.nome}</span>
+    <span class="div-causa">${d.causa}</span>
+    <span class="div-nums">posição física <span>${d.df2.toLocaleString('pt-BR')}</span> → relatório <span>${d.df1.toLocaleString('pt-BR')}</span></span>
+    <span class="ratio-badge ${RATIO_CLASS[d.ratio]}">${d.ratio}×</span>
+  </div>`;
+});
+</script>
+</body>
+</html>
